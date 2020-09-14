@@ -8,9 +8,9 @@ import torch
 
 class Div2K(Dataset):
 
-    def __init__(self, scale, patch_size):
+    def __init__(self, data_root, scale, patch_size):
 
-        self.data_dir = './DIV2K'
+        self.data_dir = data_root
         self.scale = scale
         self.patch_size = patch_size
 
@@ -36,7 +36,7 @@ class Div2K(Dataset):
         hr_patch_tensor, lr_patch_tensor = torch.from_numpy(hr_patch), torch.from_numpy(lr_patch)
 
         means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255])
-        hr_patch_tensor, lr_patch_tensor = hr_patch_tensor - means, lr_patch_tensor - means
+        lr_patch_tensor = lr_patch_tensor - means
 
         return hr_patch_tensor.permute(2, 0, 1), lr_patch_tensor.permute(2, 0, 1)
 
