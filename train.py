@@ -5,7 +5,10 @@ from dataset import Div2K
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
+import torch.nn as nn
+import torch
 from utils import *
+from torch.utils.tensorboard import SummaryWriter
 
 
 parser = argparse.ArgumentParser(description="Training arguments for MSRN Pytorch")
@@ -50,6 +53,10 @@ parser.add_argument("--epsilon", type=float, default=1e-8,
 parser.add_argument("--loss_fn", type=str, default="L1", options=["L1", "GAN"],
                     help="Loss function to use for training")
 
+# Save and display
+parser.add_argument("--display_loss_every", type=int, default=100,
+                    help="Number of training examples between every loss display")
+
 
 if __name__ == "__main__":
 
@@ -66,4 +73,41 @@ if __name__ == "__main__":
     train_sampler, validation_sampler = get_samplers(data_div2k)
     train_loader = DataLoader(data_div2k, batch_size=args.batch_size, sampler=train_sampler, num_workers=args.num_workers, pin_memory=True)
     validation_sampler = DataLoader(data_div2k, batch_size=args.batch_size, sampler=validation_sampler, num_workers=args.num_workers, pin_memory=True)
+
+    if args.loss_fn == 'L1':
+        loss = nn.L1Loss()
+
+    if not args.use_cpu:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device('cpu')
+
+    model.train()
+    model.to(device)
+
+    writer = SummaryWriter()
+
+    for epoch in range(args.epochs):
+
+        epoch_loss = 0.0
+
+        for batch, hr_patch, lr_patch in enumerate(train_loader):
+
+            hr_patch_device = hr_patch.to(device)
+            lr_patch_device = lr_patch.to(device)
+
+            hr_prediction = model(lr_patch_device)
+            batch_loss = loss(hr_prediction, hr_patch_device)
+            optimizer.zero_grad()
+            batch_loss.backward()
+            optimizer.step()
+
+            epoch_loss += batch_loss.item()
+
+            if batch + 1 == args.display_loss_every:
+                print("Epoch {} : [{}/{}] Batch loss : {}".format(epoch+1, (batch+1)*args.batch_size, len(train_loader),
+                                                                  epoch_loss/batch+1))
+
+        scheduler.step()
+
 
