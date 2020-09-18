@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     train_sampler, validation_sampler = get_samplers(data_div2k)
     train_loader = DataLoader(data_div2k, batch_size=args.batch_size, sampler=train_sampler, num_workers=args.num_workers, pin_memory=True)
-    validation_sampler = DataLoader(data_div2k, batch_size=args.batch_size, sampler=validation_sampler, num_workers=args.num_workers, pin_memory=True)
+    validation_loader = DataLoader(data_div2k, batch_size=1, sampler=validation_sampler, num_workers=args.num_workers, pin_memory=True)
 
     if args.loss_fn == 'L1':
         loss = nn.L1Loss()
@@ -82,13 +82,13 @@ if __name__ == "__main__":
     else:
         device = torch.device('cpu')
 
-    model.train()
     model.to(device)
 
     writer = SummaryWriter()
 
     for epoch in range(args.epochs):
 
+        model.train()
         epoch_loss = 0.0
 
         for batch, hr_patch, lr_patch in enumerate(train_loader):
@@ -105,9 +105,25 @@ if __name__ == "__main__":
             epoch_loss += batch_loss.item()
 
             if batch + 1 == args.display_loss_every:
-                print("Epoch {} : [{}/{}] Batch loss : {}".format(epoch+1, (batch+1)*args.batch_size, len(train_loader),
-                                                                  epoch_loss/batch+1))
+                print("Epoch {} : Sample[{}/{}] Average batch loss : {}\n".format(epoch + 1, (batch + 1) * args.batch_size, len(train_loader),
+                                                                                  epoch_loss / (batch + 1)))
 
         scheduler.step()
+        writer.add_scalar("Epoch loss", epoch_loss, epoch + 1)
 
+        model.eval()
+        epoch_psnr = 0.0
 
+        with torch.no_grad():
+            for hr_patch, lr_patch in validation_loader:
+
+                hr_patch_device = hr_patch.to(device)
+                lr_patch_device = lr_patch.to(device)
+
+                hr_prediction = model(lr_patch_device)
+
+                epoch_psnr += get_psnr(hr_patch_device, hr_prediction)
+
+        epoch_psnr /= len(validation_loader)
+        print("Epoch {} : Validation PSNR : {}\n".format(epoch + 1, epoch_psnr))
+        writer.add_scalar("PSNR", epoch_psnr, epoch + 1)
