@@ -1,5 +1,6 @@
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
+import math
 
 
 def get_samplers(dataset, seed=42):
@@ -17,3 +18,12 @@ def get_samplers(dataset, seed=42):
     valid_sampler = SubsetRandomSampler(val_indices)
 
     return train_sampler, valid_sampler
+
+
+def get_psnr(hr_ground_truth, hr_predicted):
+
+    error = hr_ground_truth - hr_predicted
+    squared_error = error ** 2
+    mean_squared_error = squared_error.mean((-1, -2, -3), keepdim=False)
+    psnr = 10 * math.log10((255 ** 2) / mean_squared_error.item())
+    return psnr
