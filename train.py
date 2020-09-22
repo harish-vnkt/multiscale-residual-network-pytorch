@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 
 
 parser = argparse.ArgumentParser(description="Training arguments for MSRN Pytorch")
@@ -56,9 +57,20 @@ parser.add_argument("--loss_fn", type=str, default="L1", options=["L1", "GAN"],
 # Save and display
 parser.add_argument("--display_loss_every", type=int, default=100,
                     help="Number of training examples between every loss display")
+parser.add_argument("--resume", type=bool, default=False,
+                    help="If training needs to be resumed")
+parser.add_argument("--checkpoint_dir", type=str, default="checkpoint",
+                    help="Path to checkpoint directory")
+parser.add_argument("--checkpoint_file", type=str, default="last.pt",
+                    help="Path to checkpoint file if training needs to be resumed")
+parser.add_argument("--results_dir", type=str, default="results",
+                    help="Path to save trained models")
 
 
 if __name__ == "__main__":
+
+    now = datetime.now()
+    log_dir = "log-" + now.strftime("%m_%d-%H_%M")
 
     args = parser.parse_args()
     print(args)
@@ -82,12 +94,32 @@ if __name__ == "__main__":
     else:
         device = torch.device('cpu')
 
+    start_epoch = 0
+
+    if args.resume():
+        checkpoint = args.checkpoint
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
+        start_epoch = checkpoint['epoch'] + 1
+
+    if not os.path.exists(args.checkpoint_dir):
+        os.makedirs(args.checkpoint_dir)
+    if not os.path.exists(args.results_dir):
+        os.makedirs(args.results_dir)
+
+    results_dir_scale = os.path.join(args.results_dir, "X" + str(args.scale))
+    if not os.path.exists(results_dir_scale):
+        os.makedirs(results_dir_scale)
+
+    checkpoint_file = os.path.join(args.checkpoint_dir, args.checkpoint_file)
+
     model.to(device)
+    writer = SummaryWriter(log_dir)
 
-    writer = SummaryWriter()
+    for epoch in range(start_epoch, args.epochs):
 
-    for epoch in range(args.epochs):
-
+        model_name = os.path.join(results_dir_scale, "epoch" + str(epoch) + ".pt")
         model.train()
         epoch_loss = 0.0
 
@@ -110,6 +142,16 @@ if __name__ == "__main__":
 
         scheduler.step()
         writer.add_scalar("Epoch loss", epoch_loss, epoch + 1)
+        torch.save({"model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "scheduler": scheduler.state_dict(),
+                    "epoch": start_epoch}, checkpoint_file)
+
+        if epoch % 100 == 99 or epoch == args.epochs - 1:
+            torch.save({"model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "scheduler": scheduler.state_dict(),
+                        "epoch": start_epoch}, model_name)
 
         model.eval()
         epoch_psnr = 0.0
