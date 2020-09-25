@@ -152,3 +152,6 @@ fabric.properties
 
 # Project specific
 DIV2K
+checkpoint
+log*
+results
