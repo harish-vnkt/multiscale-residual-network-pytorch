@@ -21,7 +21,7 @@ parser.add_argument("--patch_size", type=int, default=128,
                     help="Patch size for training")
 
 # Model
-parser.add_argument("--scale", type=int, required=True, options=[2, 3, 4],
+parser.add_argument("--scale", type=int, required=True, choices=[2, 3, 4],
                     help="Scale of super-resolution")
 parser.add_argument("--residual_blocks", type=int, default=8,
                     help="Number of residual blocks in the network")
@@ -51,7 +51,7 @@ parser.add_argument("--epsilon", type=float, default=1e-8,
                     help="Epsilon for ADAM")
 
 # Loss
-parser.add_argument("--loss_fn", type=str, default="L1", options=["L1", "GAN"],
+parser.add_argument("--loss_fn", type=str, default="L1", choices=["L1", "GAN"],
                     help="Loss function to use for training")
 
 # Save and display
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     start_epoch = 0
 
-    if args.resume():
+    if args.resume:
         checkpoint = args.checkpoint
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         model.train()
         epoch_loss = 0.0
 
-        for batch, hr_patch, lr_patch in enumerate(train_loader):
+        for batch, (hr_patch, lr_patch) in enumerate(train_loader):
 
             hr_patch_device = hr_patch.to(device)
             lr_patch_device = lr_patch.to(device)
