@@ -56,8 +56,6 @@ parser.add_argument("--loss_fn", type=str, default="L1", choices=["L1", "GAN"],
                     help="Loss function to use for training")
 
 # Save and display
-parser.add_argument("--display_loss_every", type=int, default=10,
-                    help="Number of training examples between every loss display")
 parser.add_argument("--resume", type=bool, default=False,
                     help="If training needs to be resumed")
 parser.add_argument("--checkpoint_dir", type=str, default="checkpoint",
@@ -149,11 +147,10 @@ if __name__ == "__main__":
 
             epoch_loss += batch_loss.item()
 
-            if batch + 1 == args.display_loss_every:
-                logging.info(f"Epoch {epoch + 1} : Samples[{(batch + 1) * args.batch_size}/{len(train_loader)}] Average batch loss : {epoch_loss / (batch_loss + 1)}")
+            logging.info(f"Epoch {epoch + 1} : Samples[{(batch + 1) * args.batch_size}/{len(train_loader) * args.batch_size}] Average batch loss : {epoch_loss / (batch + 1)}")
 
         scheduler.step()
-        writer.add_scalar("Epoch loss", epoch_loss, epoch + 1)
+        writer.add_scalar("Epoch_loss", epoch_loss, epoch + 1)
         torch.save({"model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
