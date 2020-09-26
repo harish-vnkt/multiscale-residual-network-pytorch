@@ -10,6 +10,7 @@ import torch
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
+import logging
 
 
 parser = argparse.ArgumentParser(description="Training arguments for MSRN Pytorch")
@@ -55,7 +56,7 @@ parser.add_argument("--loss_fn", type=str, default="L1", choices=["L1", "GAN"],
                     help="Loss function to use for training")
 
 # Save and display
-parser.add_argument("--display_loss_every", type=int, default=100,
+parser.add_argument("--display_loss_every", type=int, default=10,
                     help="Number of training examples between every loss display")
 parser.add_argument("--resume", type=bool, default=False,
                     help="If training needs to be resumed")
@@ -69,22 +70,27 @@ parser.add_argument("--results_dir", type=str, default="results",
 
 if __name__ == "__main__":
 
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(filename)s : %(message)s")
+
     now = datetime.now()
     log_dir = "log-" + now.strftime("%m_%d-%H_%M")
 
     args = parser.parse_args()
     print(args)
 
-    # TODO - loss, training loop
     model = MultiScaleResidualNetwork(scale=args.scale, res_blocks=args.residual_blocks, res_in_features=args.residual_channels, res_out_features=args.residual_channels)
+    logging.debug("Created model")
     data_div2k = Div2K(data_root=args.data_root, scale=args.scale, patch_size=args.patch_size)
+    logging.debug("Created dataset")
 
     optimizer = Adam(model.parameters(), lr=args.learning_rate, betas=(args.beta1, args.beta2), eps=args.epsilon)
     scheduler = StepLR(optimizer, step_size=200, gamma=0.5)
+    logging.debug("Created optimizer and scheduler")
 
     train_sampler, validation_sampler = get_samplers(data_div2k)
     train_loader = DataLoader(data_div2k, batch_size=args.batch_size, sampler=train_sampler, num_workers=args.num_workers, pin_memory=True)
     validation_loader = DataLoader(data_div2k, batch_size=1, sampler=validation_sampler, num_workers=args.num_workers, pin_memory=True)
+    logging.debug("Created validation and test loaders")
 
     if args.loss_fn == 'L1':
         loss = nn.L1Loss()
@@ -93,15 +99,21 @@ if __name__ == "__main__":
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     else:
         device = torch.device('cpu')
+    logging.debug("Initialized device : %s", str(device))
 
     start_epoch = 0
 
     if args.resume:
+        logging.debug("Resuming training")
         checkpoint = args.checkpoint
         model.load_state_dict(checkpoint['model'])
+        logging.debug("Loaded model")
         optimizer.load_state_dict(checkpoint['optimizer'])
+        logging.debug("Loaded optimizer")
         scheduler.load_state_dict(checkpoint['scheduler'])
+        logging.debug("Loaded scheduler")
         start_epoch = checkpoint['epoch'] + 1
+        logging.info("Starting from epoch %d", start_epoch)
 
     if not os.path.exists(args.checkpoint_dir):
         os.makedirs(args.checkpoint_dir)
@@ -116,6 +128,7 @@ if __name__ == "__main__":
 
     model.to(device)
     writer = SummaryWriter(log_dir)
+    logging.debug("Initialized tensorboard directory")
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -137,8 +150,7 @@ if __name__ == "__main__":
             epoch_loss += batch_loss.item()
 
             if batch + 1 == args.display_loss_every:
-                print("Epoch {} : Sample[{}/{}] Average batch loss : {}\n".format(epoch + 1, (batch + 1) * args.batch_size, len(train_loader),
-                                                                                  epoch_loss / (batch + 1)))
+                logging.info(f"Epoch {epoch + 1} : Samples[{(batch + 1) * args.batch_size}/{len(train_loader)}] Average batch loss : {epoch_loss / (batch_loss + 1)}")
 
         scheduler.step()
         writer.add_scalar("Epoch loss", epoch_loss, epoch + 1)
@@ -146,16 +158,19 @@ if __name__ == "__main__":
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
                     "epoch": start_epoch}, checkpoint_file)
+        logging.debug("Saved checkpoint")
 
         if epoch % 100 == 99 or epoch == args.epochs - 1:
             torch.save({"model": model.state_dict(),
                         "optimizer": optimizer.state_dict(),
                         "scheduler": scheduler.state_dict(),
                         "epoch": start_epoch}, model_name)
+            logging.debug(f"Saved model at {model_name}")
 
         model.eval()
         epoch_psnr = 0.0
 
+        logging.debug(f"Validating epoch {epoch + 1}")
         with torch.no_grad():
             for hr_patch, lr_patch in validation_loader:
 
@@ -167,5 +182,5 @@ if __name__ == "__main__":
                 epoch_psnr += get_psnr(hr_patch_device, hr_prediction)
 
         epoch_psnr /= len(validation_loader)
-        print("Epoch {} : Validation PSNR : {}\n".format(epoch + 1, epoch_psnr))
+        logging.info(f"Epoch {epoch + 1} : Average validation PSNR : {epoch_psnr}")
         writer.add_scalar("PSNR", epoch_psnr, epoch + 1)
