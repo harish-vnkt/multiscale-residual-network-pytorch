@@ -128,7 +128,7 @@ if __name__ == "__main__":
     model.to(device)
     writer = SummaryWriter(log_dir)
     logging.debug("Initialized tensorboard directory")
-    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).to(device)
+    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).to(device).reshape(1, 3, 1, 1)
 
     for epoch in range(start_epoch, args.epochs):
 
