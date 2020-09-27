@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     if args.resume:
         logging.debug("Resuming training")
-        checkpoint = args.checkpoint
+        checkpoint = torch.load(args.checkpoint)
         model.load_state_dict(checkpoint['model'])
         logging.debug("Loaded model")
         optimizer.load_state_dict(checkpoint['optimizer'])
@@ -127,6 +127,7 @@ if __name__ == "__main__":
     model.to(device)
     writer = SummaryWriter(log_dir)
     logging.debug("Initialized tensorboard directory")
+    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).to(device)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -140,6 +141,7 @@ if __name__ == "__main__":
             lr_patch_device = lr_patch.to(device)
 
             hr_prediction = model(lr_patch_device)
+            hr_prediction = hr_prediction + means
             batch_loss = loss(hr_prediction, hr_patch_device)
             optimizer.zero_grad()
             batch_loss.backward()
