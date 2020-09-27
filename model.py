@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from utils import *
 
 
 class ConvLayer(nn.Module):
@@ -71,6 +72,9 @@ class MultiScaleResidualNetwork(nn.Module):
 
         super(MultiScaleResidualNetwork, self).__init__()
 
+        self.sub_mean = MeanShift()
+        self.add_mean = MeanShift(sign=1)
+
         self.conv = ConvLayer(in_channels=3, out_channels=res_out_features, kernel_size=3)
 
         self.residual_blocks = nn.ModuleList([MultiScaleResidualBlock(in_channels=res_in_features, out_channels=res_out_features) for _ in range(res_blocks)])
@@ -81,6 +85,7 @@ class MultiScaleResidualNetwork(nn.Module):
 
     def forward(self, x):
 
+        x = self.sub_mean(x)
         output = F.relu(self.conv(x))
         residual_conv = output
 
@@ -91,7 +96,7 @@ class MultiScaleResidualNetwork(nn.Module):
 
         output = F.relu(self.feature_fusion(torch.cat(block_outputs, 1)))
         hr_image = self.reconstruction_layer(output)
-        return hr_image
+        return self.add_mean(hr_image)
 
 
 
