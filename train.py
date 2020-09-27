@@ -123,12 +123,10 @@ if __name__ == "__main__":
     if not os.path.exists(results_dir_scale):
         os.makedirs(results_dir_scale)
 
-    checkpoint_file = os.path.join(args.checkpoint_dir, args.checkpoint_file)
-
     model.to(device)
     writer = SummaryWriter(log_dir)
     logging.debug("Initialized tensorboard directory")
-    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).to(device).reshape(1, 3, 1, 1)
+    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).reshape(1, 3, 1, 1).to(device)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -157,14 +155,14 @@ if __name__ == "__main__":
         torch.save({"model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
-                    "epoch": start_epoch}, checkpoint_file)
+                    "epoch": epoch}, checkpoint_file)
         logging.debug("Saved checkpoint")
 
         if epoch % 100 == 99 or epoch == args.epochs - 1:
             torch.save({"model": model.state_dict(),
                         "optimizer": optimizer.state_dict(),
                         "scheduler": scheduler.state_dict(),
-                        "epoch": start_epoch}, model_name)
+                        "epoch": epoch}, model_name)
             logging.debug(f"Saved model at {model_name}")
 
         model.eval()
