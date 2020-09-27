@@ -101,9 +101,10 @@ if __name__ == "__main__":
 
     start_epoch = 0
 
+    checkpoint_file = os.path.join(args.checkpoint_dir, args.checkpoint_file)
     if args.resume:
         logging.debug("Resuming training")
-        checkpoint = torch.load(args.checkpoint)
+        checkpoint = torch.load(checkpoint_file)
         model.load_state_dict(checkpoint['model'])
         logging.debug("Loaded model")
         optimizer.load_state_dict(checkpoint['optimizer'])
