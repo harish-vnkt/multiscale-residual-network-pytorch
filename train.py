@@ -5,8 +5,6 @@ from dataset import Div2K
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-import torch.nn as nn
-import torch
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
@@ -126,7 +124,6 @@ if __name__ == "__main__":
     model.to(device)
     writer = SummaryWriter(log_dir)
     logging.debug("Initialized tensorboard directory")
-    means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255]).reshape(1, 3, 1, 1).to(device)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -140,7 +137,6 @@ if __name__ == "__main__":
             lr_patch_device = lr_patch.to(device)
 
             hr_prediction = model(lr_patch_device)
-            hr_prediction = hr_prediction + means
             batch_loss = loss(hr_prediction, hr_patch_device)
             optimizer.zero_grad()
             batch_loss.backward()
