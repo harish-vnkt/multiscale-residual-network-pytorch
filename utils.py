@@ -1,6 +1,8 @@
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
 import math
+import torch
+import torch.nn as nn
 
 
 def get_samplers(dataset, seed=42):
@@ -27,3 +29,20 @@ def get_psnr(hr_ground_truth, hr_predicted):
     mean_squared_error = squared_error.mean((-1, -2, -3), keepdim=False)
     psnr = 10 * math.log10((255 ** 2) / mean_squared_error.item())
     return psnr
+
+
+class MeanShift(nn.Conv2d):
+
+    def __init__(self, sign=-1):
+
+        super(MeanShift, self).__init__(3, 3, kernel_size=1)
+
+        rgb_mean = (0.4488, 0.4371, 0.4040)
+        rgb_std = (1.0, 1.0, 1.0)
+
+        std = torch.Tensor(rgb_std)
+        self.weight.data = torch.eye(3).view(3, 3, 1, 1) / std.view(3, 1, 1, 1)
+        self.bias.data = sign * 255 * torch.Tensor(rgb_mean) / std
+
+        for p in self.parameters():
+            p.requires_grad = False
