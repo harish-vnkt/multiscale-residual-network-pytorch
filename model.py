@@ -55,15 +55,15 @@ class ReconstructionNetwork(nn.Module):
 
         super(ReconstructionNetwork, self).__init__()
 
-        self.conv1 = ConvLayer(in_channels=in_features, out_channels=in_features * scale * scale, kernel_size=3)
+        self.conv1 = ConvLayer(in_channels=in_features, out_channels=in_features * scale * scale, kernel_size=3, activation=False)
         self.shuffle = nn.PixelShuffle(scale)
-        self.conv2 = ConvLayer(in_channels=in_features, out_channels=3, kernel_size=3)
+        self.conv2 = ConvLayer(in_channels=in_features, out_channels=3, kernel_size=3, activation=False)
 
     def forward(self, x):
 
-        output = F.relu(self.conv1(x))
+        output = self.conv1(x)
         output = self.shuffle(output)
-        return F.relu(self.conv2(output))
+        return self.conv2(output)
 
 
 class MultiScaleResidualNetwork(nn.Module):
@@ -75,18 +75,18 @@ class MultiScaleResidualNetwork(nn.Module):
         self.sub_mean = MeanShift()
         self.add_mean = MeanShift(sign=1)
 
-        self.conv = ConvLayer(in_channels=3, out_channels=res_out_features, kernel_size=3)
+        self.conv = ConvLayer(in_channels=3, out_channels=res_out_features, kernel_size=3, activation=False)
 
         self.residual_blocks = nn.ModuleList([MultiScaleResidualBlock(in_channels=res_in_features, out_channels=res_out_features) for _ in range(res_blocks)])
 
-        self.feature_fusion = ConvLayer(in_channels=res_in_features * (res_blocks + 1), out_channels=res_out_features, kernel_size=1)
+        self.feature_fusion = ConvLayer(in_channels=res_in_features * (res_blocks + 1), out_channels=res_out_features, kernel_size=1, activation=False)
 
         self.reconstruction_layer = ReconstructionNetwork(scale=scale, in_features=res_in_features)
 
     def forward(self, x):
 
         x = self.sub_mean(x)
-        output = F.relu(self.conv(x))
+        output = self.conv(x)
         residual_conv = output
 
         block_outputs = [residual_conv]
@@ -94,7 +94,7 @@ class MultiScaleResidualNetwork(nn.Module):
             output = block(output)
             block_outputs.append(output)
 
-        output = F.relu(self.feature_fusion(torch.cat(block_outputs, 1)))
+        output = self.feature_fusion(torch.cat(block_outputs, 1))
         hr_image = self.reconstruction_layer(output)
         return self.add_mean(hr_image)
 
