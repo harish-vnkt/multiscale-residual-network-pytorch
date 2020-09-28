@@ -35,10 +35,7 @@ class Div2K(Dataset):
         hr_patch, lr_patch = self.extract_patch(hr_img, lr_img)
         hr_patch_tensor, lr_patch_tensor = torch.from_numpy(hr_patch), torch.from_numpy(lr_patch)
 
-        means = torch.tensor([0.4488 * 255, 0.4371 * 255, 0.4040 * 255])
-        lr_patch_tensor = lr_patch_tensor - means
-
-        return hr_patch_tensor.permute(2, 0, 1), lr_patch_tensor.permute(2, 0, 1)
+        return hr_patch_tensor.permute(2, 0, 1).type(torch.float32), lr_patch_tensor.permute(2, 0, 1).type(torch.float32)
 
     def extract_patch(self, hr_img, lr_img):
 
