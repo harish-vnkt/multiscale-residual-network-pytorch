@@ -68,12 +68,17 @@ class ReconstructionNetwork(nn.Module):
 
 class MultiScaleResidualNetwork(nn.Module):
 
-    def __init__(self, scale, res_blocks, res_in_features, res_out_features):
+    def __init__(self, scale, res_blocks, res_in_features, res_out_features, infer=False):
 
         super(MultiScaleResidualNetwork, self).__init__()
 
-        self.sub_mean = MeanShift()
-        self.add_mean = MeanShift(sign=1)
+        if not infer:
+            self.sub_mean = MeanShift()
+            self.add_mean = MeanShift(sign=1)
+        else:
+            rgb_mean = (0.0, 0.0, 0.0)
+            self.sub_mean = MeanShift(rgb_mean=rgb_mean)
+            self.add_mean = MeanShift(rgb_mean=rgb_mean, sign=1)
 
         self.conv = ConvLayer(in_channels=3, out_channels=res_out_features, kernel_size=3, activation=False)
 

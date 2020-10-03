@@ -33,11 +33,10 @@ def get_psnr(hr_ground_truth, hr_predicted):
 
 class MeanShift(nn.Conv2d):
 
-    def __init__(self, sign=-1):
+    def __init__(self, sign=-1, rgb_mean=(0.4040, 0.4371, 0.4488)):
 
         super(MeanShift, self).__init__(3, 3, kernel_size=1)
 
-        rgb_mean = (0.4040, 0.4371, 0.4488)
         rgb_std = (1.0, 1.0, 1.0)
 
         std = torch.Tensor(rgb_std)
