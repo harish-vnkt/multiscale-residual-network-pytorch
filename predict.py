@@ -10,6 +10,8 @@ import logging
 parser = argparse.ArgumentParser(description="Prediction arguments for MSRN Pytorch")
 
 # Data
+parser.add_argument("--data_root", type=str, required=True,
+                    help="Root directory of dataset")
 parser.add_argument("--data_set", type=str, choices=["Set14"],
                     default="Set14", help="Data set to run prediction on")
 
