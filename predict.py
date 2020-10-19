@@ -4,7 +4,6 @@ from model import MultiScaleResidualNetwork
 from dataset import *
 from torch.utils.data import DataLoader
 from utils import *
-from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 import logging
 
@@ -40,7 +39,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(filename)s : %(message)s")
 
     now = datetime.now()
-    log_dir = "predict_log-" + now.strftime("%m_%d-%H_%M")
 
     args = parser.parse_args()
     print(args)
@@ -73,7 +71,6 @@ if __name__ == "__main__":
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
-    writer = SummaryWriter(log_dir)
     logging.debug("Initialized tensorboard directory")
 
     average_psnr = 0.0
