@@ -54,6 +54,6 @@ def write_results(predictions, results_dir, image_name):
     image_path = os.path.join(results_dir, image_name)
     image_tensor = predictions[0, :, :, :]
     image_tensor.permute(1, 2, 0)
-    image_tensor = image_tensor.numpy()
+    image_tensor = image_tensor.cpu().numpy()
 
     cv2.imwrite(image_path, image_tensor)
