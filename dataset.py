@@ -55,7 +55,7 @@ class Set14(Dataset):
         self.data_dir = data_root
         self.scale = scale
 
-        self.hr_folder = os.path.join(self.data_dir, 'original')
+        self.hr_folder = os.path.join(self.data_dir, 'GTmod12')
         self.lr_folder = os.path.join(self.data_dir, 'LRbicx' + str(self.scale))
 
         self.extension = 'png'
