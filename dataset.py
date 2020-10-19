@@ -46,3 +46,32 @@ class Div2K(Dataset):
         x_hr, y_hr = x_lr * self.scale, y_lr * self.scale
 
         return hr_img[y_hr:y_hr + hr_patch_size, x_hr:x_hr + hr_patch_size, :], lr_img[y_lr:y_lr + self.patch_size, x_lr:x_lr + self.patch_size, :]
+
+
+class Set14(Dataset):
+
+    def __init__(self, data_root, scale):
+
+        self.data_dir = data_root
+        self.scale = scale
+
+        self.hr_folder = os.path.join(self.data_dir, 'original')
+        self.lr_folder = os.path.join(self.data_dir, 'LRbicx' + str(self.scale))
+
+        self.extension = 'png'
+        self.hr_image_names = glob.glob(self.hr_folder + '/*.png')
+
+    def __len__(self):
+
+        return len(self.hr_image_names)
+
+    def __getitem__(self, item):
+
+        hr_img_name = self.hr_image_names[item]
+        hr_img = cv2.imread(hr_img_name)
+        lr_img_name = os.path.join(self.lr_folder, hr_img_name)
+        lr_img = cv2.imread(lr_img_name)
+
+        hr_tensor, lr_tensor = torch.from_numpy(hr_img), torch.from_numpy(lr_img)
+
+        return hr_tensor.permute(2, 0, 1).type(torch.float32), lr_tensor.permute(2, 0, 1).type(torch.float32)
