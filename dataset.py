@@ -69,7 +69,7 @@ class Set14(Dataset):
 
         hr_img_name = self.hr_image_names[item]
         hr_img = cv2.imread(hr_img_name)
-        lr_img_name = os.path.join(self.lr_folder, hr_img_name)
+        lr_img_name = os.path.join(self.lr_folder, os.path.basename(hr_img_name))
         lr_img = cv2.imread(lr_img_name)
 
         hr_tensor, lr_tensor = torch.from_numpy(hr_img), torch.from_numpy(lr_img)
