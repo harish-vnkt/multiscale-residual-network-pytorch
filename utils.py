@@ -3,6 +3,8 @@ import numpy as np
 import math
 import torch
 import torch.nn as nn
+import os
+import cv2
 
 
 def get_samplers(dataset, seed=42):
@@ -45,3 +47,13 @@ class MeanShift(nn.Conv2d):
 
         for p in self.parameters():
             p.requires_grad = False
+
+
+def write_results(predictions, results_dir, image_name):
+
+    image_path = os.path.join(results_dir, image_name)
+    image_tensor = predictions[0, :, :, :]
+    image_tensor.permute(1, 2, 0)
+    image_tensor = image_tensor.numpy()
+
+    cv2.imwrite(image_path, image_tensor)
