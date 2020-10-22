@@ -32,9 +32,6 @@ parser.add_argument("--num_workers", type=int, default=os.cpu_count(),
                     help="Number of cpu's used for data loading")
 parser.add_argument("--use_cpu", type=bool, default=False,
                     help="Use CPU for training")
-parser.add_argument("--num_gpus", type=int, default=1,
-                    help="Number of gpu's for training")
-
 # Training specs
 parser.add_argument("--epochs", type=int, default=1000,
                     help="Number of epochs for training")

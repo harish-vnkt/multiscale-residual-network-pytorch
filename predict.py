@@ -21,19 +21,13 @@ parser.add_argument("--scale", type=int, required=True, choices=[2, 4],
 parser.add_argument("--model_file", type=str, required=True,
                     help="Path to .pt file")
 parser.add_argument("--results_dir", type=str, required=True,
-                    help="Scale of super-resolution")
-parser.add_argument("--residual_blocks", type=int, default=8,
-                    help="Number of residual blocks in the network")
-parser.add_argument("--residual_channels", type=int, default=64,
-                    help="Number of channels at the input and output of residual blocks")
+                    help="Path to results directory")
 
 # Platform config
 parser.add_argument("--num_workers", type=int, default=os.cpu_count(),
                     help="Number of cpu's used for data loading")
 parser.add_argument("--use_cpu", type=bool, default=False,
                     help="Use CPU for training")
-parser.add_argument("--num_gpus", type=int, default=1,
-                    help="Number of gpu's for training")
 
 
 if __name__ == "__main__":
